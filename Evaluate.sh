@@ -82,13 +82,25 @@ if [ $overwrite ]; then
     log "Overwrite enabled, will remove data files before metrics are recorded."
 fi
 
+randoop_path=`pwd`"/experiments/lib/randoop-baseline-3.0.9.jar"
+java_path=`pwd`"/experiments/lib/jdk1.7.0/bin/java"
+
+# Check that the digdog repository exists alongside this repo, if not,
+# clone it. Either way, we briefly step inside to build the .jar file,
+# then step out to the parent directory of all 3 directories (randoop,
+# defects4j, randoopEvaluation) to perform most of the work.
+if [ ! -d "randoop" ] ; then
+    log "DigDog repository was not found, cloning it now."
+    cd ..
+    git clone https://github.com/jkotalik/randoop
+fi
+
+cd randoop
+
 # Set up some fixed values to be used throughout the script
 work_dir=proj
 
-randoop_path=`pwd`"/experiments/lib/randoop-baseline-3.0.9.jar"
 digdog_path=`pwd`"/build/libs/randoop-all-3.0.8.jar"
-java_path=`pwd`"/experiments/lib/jdk1.7.0/bin/java"
-plot_path=`pwd`"/Plot.py"
 
 chmod u+x $java_path
 # If the build flag was set or if there is no digdog jar
@@ -337,7 +349,7 @@ doCoverage() {
 
     log "Running ${2} Experiment with $1"
     log "Times are: [${time_limits[*]}]"
-    exp_dir="../randoop/experiments"
+    exp_dir="../randoopEvaluation/experiments"
     failure_file="${exp_dir}/failure_counts.txt"
 
     if [ -f ${failure_file} ]; then
@@ -472,7 +484,7 @@ doFaultDetection() {
     fi
 
     log "Running Fault Detection with $1"
-    exp_dir="../randoop/experiments"
+    exp_dir="../randoopEvaluation/experiments"
 
     if [ ! -d ${exp_dir} ]; then
         mkdir ${exp_dir}
