@@ -84,6 +84,7 @@ fi
 
 randoop_path=`pwd`"/experiments/lib/randoop-baseline-3.0.9.jar"
 java_path=`pwd`"/experiments/lib/jdk1.7.0/bin/java"
+cd ..
 
 # Check that the digdog repository exists alongside this repo, if not,
 # clone it. Either way, we briefly step inside to build the .jar file,
@@ -91,7 +92,6 @@ java_path=`pwd`"/experiments/lib/jdk1.7.0/bin/java"
 # defects4j, randoopEvaluation) to perform most of the work.
 if [ ! -d "randoop" ] ; then
     log "DigDog repository was not found, cloning it now."
-    cd ..
     git clone https://github.com/jkotalik/randoop
 fi
 
