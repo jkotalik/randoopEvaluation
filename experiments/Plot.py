@@ -182,7 +182,7 @@ def avg(lst):
 # list[string] 			seriesLabels	The names of the dataseries
 # list[list]			data 			The dataseries to be plotted
 # boolean 				isSmallTest		Whether or not Randoop's small tests are being compared against
-# Outputs a plot of data to file `title`.png
+# Outputs a plot of data to file plots/`title`.png
 def plot(isLinePlot, title, seriesLabels, data, isSmallTest):
 	plt.figure()
 	
@@ -210,14 +210,19 @@ def plot(isLinePlot, title, seriesLabels, data, isSmallTest):
 # list[string] 			seriesLabels	The names of the dataseries
 # list[list]			data 			The dataseries to be plotted
 # boolean 				isSmallTest		Whether or not Randoop's small tests are being compared against
-# Outputs the data to file in csv format to `title`.csv
+# Outputs the data to file in csv format to csv/`title`.csv
 def outputCsv(numFiles, title, seriesLabels, data, isSmallTest):
+	prefix = ''
+	if isSmallTest:
+		prefix = 'smalltestData/'
+
 	try:
-		os.remove('smalltestData/csv/%s.csv' % (title,))
+		os.remove('%scsv/%s.csv' % (prefix, title,))
 	except OSError:
 		pass
 
-	f = open('smalltestData/csv/%s.csv' % (title,), 'w+')
+
+	f = open('%scsv/%s.csv' % (prefix, title,), 'w+')
 
 	avgs = [[avg(y) for y in x] for x in data]
 
