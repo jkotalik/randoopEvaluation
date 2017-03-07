@@ -70,7 +70,7 @@ def writeCsv(header1, header2, table):
 			if i == 0:
 				print >> f, '%d,' % int(row[i]),
 			else:
-				print >> f, '%f,' % (int(row[i] * 100) / 100.0),
+				print >> f, '%d,' % int(row[i]),
 		print >> f
 
 def main():
