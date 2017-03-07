@@ -1,32 +1,27 @@
 ## DigDog
 
 ### Getting Started
-Welcome to the DigDog Repository! To get started, clone this repository on your system:
+Welcome to the DigDog Repository! We'll assume you're running on a linux environment. To get started, clone this repository on your system. We recommend you make a fresh directory to clone this into, since our evaluation framework will be downloading some other repositories alongside it, and interacting with those:
 
-`git clone https://github.com/jkotalik/randoop.git`
+`mkdir <myNewDirectory>`
 
-Then, step into the newly cloned directory, and run the evaluation script with your desired configuration (explained in more detail below). We'll provide an example configuration here that will allow partial replication of results for the Time project.
+`cd <myNewDirectory>`
 
-`cd randoop`
+`git clone https://github.com/jkotalik/randoopEvaluation.git`
 
-`./Evaluate.sh -i -b -o -t 50,200,350,500 -p Time`
+Then, step into the newly cloned directory.
 
-A few notes/warnings:
-- the `-i` flag tells the script to perform the initial set up, which includes cloning the defects4j repository in the parent directory. If you have a folder named defects4j OR randoop in the directory alongside this repository, it will remove that folder! It will then clone the defects4j and DigDog repositories to sit alongside this repository.
-- the `-b` flag ensures that the local files will be packaged into a .jar file to be used in the experiment which gathers metrics from DigDog
-- the `-o` flag tells the script to overwrite any existing data files for the experiments that it will run
-- you may need to run `chmod u+x ./Evaluate.sh` to get the script to execute the first time
-- the `-t` flag specifies the time limits to use for test generation. Our full results include time limits ranging from 50-600, but we picked a few values here to allow for a quicker replication.
-- the `-p` flag specifies which project to run the test generation tools on. We've selected just 1 of the 4 projects here to save time.
-- Even with the specified time limimts and project, this script will still take a number of hours to finish. You can make it finish more quickly by specifying fewer time limimts or specifying which experiment conditions you want to run (it defaults to running all 4). Full information on the command line flags can be found below.
+`cd randoopEvaluation`
 
-To replicate all data for the individual experiments:
-`./Evaluate.sh -b -o`
-The command listed above will run what we refer to as the "Individual experiments." Please note that it can take a number of days to finish running all of them, because it will iterate through all conditions, time limits, and projects. Specifying fewer time limits, projects, or experiment conditions can be done through the use of command line arguments, and is encouraged when attempting to replicate particular results. Command line arguments are explained in more detail below.
+Next, run the evaluation script with your desired configuration (explained in more detail below). This script runs the test generation tools with varying time limits across Defects4J projects. Here is an example configuration that will allow partial replication of the data for the "Time" project in Defects4j, using all 4 configurations of Randoop/DigDog:
 
-To replicate all data for the complete experiments:
-`./Evaluate.sh -b -o -c`
-The other primary use case of the `Evaluate.sh` script is to run the "complete/benchmark experiments". This can be done by using the `-c` command line flag. This defaults to running both experiment conditions (Randoop and DigDog) over all 4 projects, using a variety of time limits based on the number of classes in each project. Note that running all of the complete experiment (ie, running `./Evaluate.sh -b -o -c`) without using additional options to specify the experiment condition, time limits, or projects, will take even longer than the individual experiments.
+`./Evaluate.sh -i -b -o -t 50,200,350 -p Time`
+
+To execute the script, you may need to first run `chmod u+x ./Evaluate.sh`.
+
+This command will allow partial replication of results for the Time project. Please note that it will take a number of hours to run. To make it finish more quickly, you can specify fewer time limits or experiment conditions using the command line options. You can also run it in the background by instead running:
+
+`nohup ./Evaluate.sh -i -b -o -t 50,200,350 -p Time &>experiments/log &` (this will record its output in `experiments/log` so you can check up on the execution from time to time as it runs)
 
 As the script runs, it will output coverage data in a line-separated format to the `experiments` directory. These data files can then be passed to the plotting script to produce graphs and csv files of the results. More information on the naming and formatting conventions of these intermediate data files can be found below.
 
@@ -38,8 +33,8 @@ The data can then be used to generate graphs comparing the various tools:
 
 The graph will be saved in the `experiments/plots` directory, named `'Project' 'CoverageType' Coverage Percentage.png`.
 
-As an example, performing the following set of commands (waiting a number of hours for the evaluation script to finish before invoking the next command) will replicate some results for the Time project's individual experiment:
-`./Evaluate.sh -i -b -o -t 50,200,350,500 -p Time`
+To summarize this opening example, performing the following set of commands (waiting a number of hours for the evaluation script to finish before invoking the next command) will replicate some results for the Time project's individual experiment:
+`./Evaluate.sh -i -b -o -t 50,200,350 -p Time`
 
 
 `python experiments/Plot.py experiments/Time_Individual_Randoop_Line.txt experiments/Time_Orienteering_Line.txt  experiments/Time_Individual_ConstantMining_Line.txt  experiments/Time_Individual_DigDog_Line.txt`
@@ -53,12 +48,14 @@ This yields the following data files and plots:
 `experiments/Time Individual Branch Coverage Percentage.csv`
 `experiments/Time Individual Line Coverage Percentage.csv`
 
+Read on for a complete description of options and configurations for the Evaluation script.
+
 ### Further documentation of Evaluate.sh
 To run the script and gather data on the performance of DigDog: `./Evaluate.sh`. You may need to change the permissions with `chmod u+x ./Evaluate.sh` first.
 
 Flags with values should have the values as a separate, comma-separated token (without spaces). Accepted flags:
-- `[-i|--init]` Performs first-time set up of the defects4j repository, including cloning, checking out the projects, and setting up the Perl DBI. This behavior is default unless the defects4j repository exists alongside this repository.
-- `[-b|--build]` Builds the digdog .jar file based on the current state of your local files. This behavior is default if there isn't already a .jar file in the expected build path of this project (`build/libs/randoop-all-3.0.8.jar`).
+- `[-i|--init]` Performs first-time set up of the defects4j repository, including cloning, checking out the projects, and setting up the Perl DBI. This behavior is default unless the defects4j repository exists alongside this repository. Please note that this will remove any existing folders alongside this project that are named "randoop" or "defects4j".
+- `[-b|--build]` Builds the digdog .jar file based on the current state of your local files. This behavior is default if there isn't already a .jar file in the expected build path of this project (`build/libs/randoop-all-3.0.10.jar`).
 - `[-o|--overwrite]` If set, removes the existing data files from the `experiments/` directory before writing to the file for the first time in a particular experiment condition/project. Default behavior is to append the new values to the existing data file.
 - `[-c|--complete]` If set, performs the complete experiment. Otherwise, defaults to the individual experiment. The complete experiment runs over each project with the time limit multiplied by the number of classes in the project, and only accepts experiment conditions of `Randoop` or `DigDog`.
 - `[-t|--time]` Time limit values to use for experiments, in seconds, as a comma separated list of time limits. Default value for the individual experiment is 50,100,150,200,250,300,350,400,450,500,550,600. Default value for the complete experiment is 2,10,30,60.
@@ -67,7 +64,6 @@ Flags with values should have the values as a separate, comma-separated token (w
     * Accepted values for the individual experiment: Randoo, DigDog, Orienteering, ConstantMining
 - `[-p|--proj|--projects]` Which defects4j projects to run the experiments over. Defaults to all four projects.
     * Accepted values: Chart, Lang, Math, Time
-
 
 #### Experiments/Output:
 
@@ -98,6 +94,18 @@ Measures the metrics across each of the 4 defects4j projects. Compares the base 
 ```
 
 The file will have a section for each time limit (defaults to 50, 100, ..., 600 seconds). Each section will start with a line that contains `TIME x`, where x is the time limit for that section. Within each section, the data will be stored as pairs of lines, each pair starting with # covered on the first line, and total # on the second line.
+
+### Replication of Results:
+
+To replicate all data for the individual experiments:
+
+`./Evaluate.sh -b -o` 
+The command listed above will run what we refer to as the "Individual experiments." Please note that it can take a number of days to finish running all of them, because it will iterate through all conditions, time limits, and projects. Specifying fewer time limits, projects, or experiment conditions can be done through the use of command line arguments, and is encouraged when attempting to replicate particular results.
+
+To replicate all data for the complete experiments:
+
+`./Evaluate.sh -b -o -c`
+The other primary use case of the Evaluate.sh script is to run the "complete/benchmark experiments". This can be done by using the `-c` command line flag. This defaults to running both experiment conditions (Randoop and DigDog) over all 4 projects, using a variety of time limits based on the number of classes in each project. Note that running all of the complete experiment (ie, running ./Evaluate.sh -b -o -c) without using additional options to specify the experiment condition, time limits, or projects, will take even longer than the individual experiments.
 
 ### Plot Script
 To run the script and create graphs for the data generated by the evaluation script:
