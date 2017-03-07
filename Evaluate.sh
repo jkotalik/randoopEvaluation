@@ -105,7 +105,16 @@ randoop_path=`pwd`"/experiments/lib/randoop-baseline-3.0.9.jar"
 java_path=`pwd`"/experiments/lib/jdk1.7.0/bin/java"
 cd ..
 
-# Check that the digdog repository exists alongside this repo, and if not,
+# If we are running first-time setup, we remove any existing randoop/digdog
+# repository.
+if [ $init ]; then
+	if [ -d "randoop" ]; then
+		log "Init flag was set and randoop repository existed, removing..."
+		rm -rf randoop
+	fi
+fi
+
+# Check that the digdog repository exists alongside this repo, if not,
 # clone it. Either way, we briefly step inside to build the .jar file,
 # then step out to the parent directory of all 3 directories (randoop,
 # defects4j, randoopEvaluation) to perform most of the work.
@@ -315,6 +324,10 @@ packageTests() {
 # the correct format for the defects4j bug_detection task.
 packageTestsForFaultDetection() {
     rm -f $test_dir/*Regression*
+	# Remove the test driver before we attempt to fix the suite.
+	# This allows the fix_test_suite task to work correctly.
+	rm -f $test_dir/ErrorTest.java
+	rm -f $test_dir/ErrorTests.java
     packageTests
 
     log "Renaming packaged tests for fault detection task"
@@ -331,7 +344,14 @@ countFaultDetection() {
     rm -rf ../randoop/experiments/fault_detection
     perl ./framework/bin/run_bug_detection.pl -p $project -d ${curr_dir} -o ../randoop/experiments/fault_detection -v ${version}f
     fault_data=`cat ../randoop/experiments/fault_detection/bug_detection`
-    echo "${fault_data}" >> $fault_file
+	if echo "$fault_data" | grep -q "Fail"; then
+		log "setting found_bug to true"
+		found_bug=true;
+	else
+		log "setting found_bug to false"
+		found_bug=false;
+	fi
+    echo "${fault_data}" >> $log_file
 }
 
 # Use the defects4j coverage task and the generated test suite to measure the line and
@@ -535,7 +555,7 @@ doFaultDetection() {
     if [ $time_arg ]; then
         time_limits=$specified_times
     else
-        time_limits=(120)
+        time_limits=(120 300 600)
     fi
 
     log "Running Fault Detection with $1"
@@ -549,6 +569,7 @@ doFaultDetection() {
         #TODO: introduce some logic to not clobber files, incrementing a counter
         # and appending that value to the filename until we find a filename that doesn't conflict
         fault_file="${exp_dir}/${project}_Fault_${1}.txt"
+	log_file="${exp_dir}/${project}_fault_log_${1}.txt"
         log "Fault file is: ${fault_file}"
         randoop_output_file="${exp_dir}/Randoop_output.txt"
 
@@ -576,8 +597,10 @@ doFaultDetection() {
                 exit 1
                 ;;
         esac
-
-        version=2
+        version=1
+            for time in ${time_limits[@]}; do
+                echo "TIME ${time}" >> ${fault_file}
+		echo $num_versions >> $fault_file
         while [ "$version" -le "$num_versions" ]; do
             jar_path="jarList/${project}_${version}_jars.txt"
             classlist_path="classList/${project}_${version}_classlist.txt"
@@ -588,34 +611,30 @@ doFaultDetection() {
             
             checkoutProject "b"
             prepProjectForGeneration ${jar_path}
-            for time in ${time_limits[@]}; do
-                echo "TIME ${time}" >> ${fault_file}
                 i=1
                 while [ $i -le 5 ]; do
                     case $1 in
                         Randoop)
-                            log "Running base Randoop with time limit=${time}, ${project} #${i}"
-                            $java_path -ea -classpath ${jars}${curr_dir}/${classes_dir}:$randoop_path randoop.main.Main gentests --classlist=${classlist_path} --literals-level=CLASS --literals-file=CLASSES --timelimit=${time} --junit-reflection-allowed=false --junit-package-name=${curr_dir}.gentests --randomseed=$RANDOM --ignore-flaky-tests=true > $randoop_output_file
-                            checkForEmptyRandoopExec
-                            if [ "$randoop_empty" = true ]; then
-                                log "Randoop was empty for project ${project} v ${version}, moving on"
-                                i=5
-                            fi
+                            log "Running Randoop (faults) with time limit=${time}, ${project} #${i}"
+                            $java_path -ea -classpath ${jars}${curr_dir}/${classes_dir}:$randoop_path randoop.main.Main gentests --classlist=${classlist_path} --literals-level=CLASS --literals-file=CLASSES --timelimit=${time} --junit-reflection-allowed=false --junit-package-name=${curr_dir}.gentests --randomseed=$RANDOM --ignore-flaky-tests=true
+                            ;;
+                        DigDog)
+                            log "Running DigDog (faults) with time limit=${time}, ${project} #${i}"
+                            $java_path -ea -classpath ${jars}${curr_dir}/${classes_dir}:$digdog_path randoop.main.Main gentests --classlist=${classlist_path} --literals-level=CLASS --literals-file=CLASSES --timelimit=${time} --junit-reflection-allowed=false --junit-package-name=${curr_dir}.gentests --randomseed=$RANDOM --ignore-flaky-tests=true --orienteering=true --constant_mining=true
                             ;;
                         *)
                             log "Unknown condition in fault detection experiment"
                             exit 1
                             ;;
                     esac
-                    if [ "$randoop_empty" = false ]; then
-                        log "randoop was not empty for project ${project} v ${version}, attempting fault detection."
-                        adjustTestNames
-                        packageTestsForFaultDetection
-                        countFaultDetection
-                        if grep -Fxq "Fail" "$fault_data" ; then
-                            log "found failing test on ${project} ${version}"
+                    log "randoop was not empty for project ${project} v ${version}, attempting fault detection."
+                    adjustTestNames
+                    packageTestsForFaultDetection
+                    countFaultDetection
+                    if [ "${found_bug}" = true ] ; then
+                            echo $version >> $fault_file 
+			log "found failing test on ${project} ${version}"
                             i=5
-                        fi
                     fi
                     i=$((i+1))
                 done
@@ -627,8 +646,10 @@ doFaultDetection() {
 }
 
 if [ $run_fault_detection ]; then
-    doFaultDetection "Randoop"
-    exit 0
+    for exp in ${specified_experiments[@]}; do
+	doFaultDetection $exp
+	done
+	exit 0
 fi
 
 if [ $run_complete_experiment ]; then

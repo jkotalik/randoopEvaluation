@@ -5,14 +5,22 @@ import matplotlib.pyplot as plt
 import numpy, re, sys, os
 import matplotlib.patches as mpatches
 
-projects = ['Chart', 'Math', 'Time', 'Lang']
+# Times that will be read from given experiment
 times = []
+
+# Colors for pyplot
 colors = ['pink', 'lightblue', 'thistle', 'lightgreen', 'paleturquoise', 'lightcoral']
+
 # Marker codes for pyplot
 markers = ['o', 's', 'D', '^', 'p', '*']
+
 # Linestyles for pyplot
 linestyles = ['-', '--', ':', '-.']
 
+# string	fileName 			name of file from which to read data
+# Reads the coverage data stored in fileName.txt
+# Returns 3-tuple storing (title of data, experiment condition {complete or individual}, data), the data in the
+# return tuple is a list whose elements are lists of coverage percentages pertaining to the time limits in times
 def readData(fileName):
 	f = open(fileName, 'r')
 
@@ -62,14 +70,14 @@ def readData(fileName):
 
 # list[list]	lst 			List of lists of any type
 # Returns a 1 dimensional interspersion of the lists
-# Ex: [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+# Ex: intersperse([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 # 	  returns [1, 4, 7, 2, 5, 8, 3, 6, 8]
 def intersperse(lst):
 	return [val for group in zip(*lst) for val in group]
 
 
 # string		title 			Title to be used in the saving of the chart
-# lst[String]	seriesLabels	A list of the dataSeries' names
+# list[String]	seriesLabels	A list of the dataSeries' names
 #								Ex: ['Randoop', 'Orienteering']
 # list[list]	lst 			A list of lists, each inner list contains 10 lists
 #								The innermost lists contain the information for one boxplot
@@ -99,6 +107,10 @@ def boxplot(title, seriesLabels, lst):
 		color = colors[i % len(lst)]
 		patch.set_facecolor(color)
 
+# list[int]		dataPositions	A list containing the positions in which the data will be plotted
+# int			numSeries 		The number of data series to be plotted
+# Returns a list of positions indicating where the labels are to be placed
+# this serves to place the label for related boxplots in the middle of them
 def getLabelPositions(dataPositions, numSeries):
 	labelPositions = []
 
@@ -134,12 +146,16 @@ def lineplot(title, seriesLabels, lst):
 		seriesIdx = i % len(lst)
 		plt.plot(times, series, marker=markers[seriesIdx], linestyle=linestyles[seriesIdx], color=colors[seriesIdx])
 
-# Accepts a list of lists, the inner lists contain coverage percentages
+# list[list]	lst 			List of lists, the inner lists contain coverage percentages
 # Returns a list of the median coverage percentage of the inner lists
 def getMedians(lst):
 	lst = [sorted(x) for x in lst]
 	return [(((x[len(x) / 2] + x[len(x) / 2 + 1]) / 2.0) if len(x) % 2 == 0 else x[len(x) / 2]) for x in lst]
 
+# list[list or elem]	lst 			List of lists or elements to be flattened
+# Returns a flattened list in which inner lists have simply been flattened to the component elements
+# Ex: flatten([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+# 	  returns [1, 2, 3, 4, 5, 6, 7, 8, 9]
 def flatten(lst):
   out = []
   for item in lst:
@@ -149,12 +165,24 @@ def flatten(lst):
       out.append(item)
   return out
 
+# list[list or elem]	lst 			List of lists or elements
+# Returns the maximum value stored in the list, including
+# elements that may have been contained in inner lists
 def getMaxPoint(lst):
 	return sorted(flatten(lst), reverse=True)[0]
 
+# list[float]			lst 			List of floats
+# Returns the average value of lst as a float rounded to 2 decimal places
 def avg(lst):
 	return int(100 * sum(lst) / len(lst)) / 100.0
 
+# boolean				isLinePlot		Whether or not a line plot is to
+#										be drawn, if false, box plot is drawn
+# string 				title 			Title of plot
+# list[string] 			seriesLabels	The names of the dataseries
+# list[list]			data 			The dataseries to be plotted
+# boolean 				isSmallTest		Whether or not Randoop's small tests are being compared against
+# Outputs a plot of data to file plots/`title`.png
 def plot(isLinePlot, title, seriesLabels, data, isSmallTest):
 	plt.figure()
 	
@@ -167,7 +195,6 @@ def plot(isLinePlot, title, seriesLabels, data, isSmallTest):
 	else:
 		boxplot(title, seriesLabels, data)
 
-	#plt.title(title)
 	plt.xlabel('Global Time Limit (s)')
 	plt.ylabel('Coverage (%)')
 	plt.ylim(0, getMaxPoint(data) * 1.1)
@@ -178,21 +205,30 @@ def plot(isLinePlot, title, seriesLabels, data, isSmallTest):
 	else:
 		plt.savefig('plots/%s' % title, format='png')
 
-# Output the medians of the datasets to a csv
-def outputCsv(numFiles, labels, title, data, isSmallTest):
+# int					numFiles		Number of files from which the data was read
+# string 				title 			Title of output file
+# list[string] 			seriesLabels	The names of the dataseries
+# list[list]			data 			The dataseries to be plotted
+# boolean 				isSmallTest		Whether or not Randoop's small tests are being compared against
+# Outputs the data to file in csv format to csv/`title`.csv
+def outputCsv(numFiles, title, seriesLabels, data, isSmallTest):
+	prefix = ''
+	if isSmallTest:
+		prefix = 'smalltestData/'
+
 	try:
-		os.remove('smalltestData/csv/%s.csv' % (title,))
+		os.remove('%scsv/%s.csv' % (prefix, title,))
 	except OSError:
 		pass
 
-	f = open('smalltestData/csv/%s.csv' % (title,), 'w+')
+
+	f = open('%scsv/%s.csv' % (prefix, title,), 'w+')
 
 	avgs = [[avg(y) for y in x] for x in data]
-	#medians = [getMedians(x) for x in data]
 
 	print >> f, 'Time,',
 	for i in range(numFiles):
-		print >> f, '%s,' % labels[i],
+		print >> f, '%s,' % seriesLabels[i],
 
 	print >> f
 
@@ -219,6 +255,7 @@ def main():
 			isSmallTest = True
 			sys.argv.remove('-s')
 	
+	# Get the numbre of files to containing data
 	numFiles = len(sys.argv) - 1
 
 	titles, seriesLabels, data = ([0 for i in range(numFiles)] for j in range(3))
@@ -239,12 +276,11 @@ def main():
 		data[i] = data[i][:minLength]
 
 
+	# Plot the data
 	plot(isLinePlot, titles[0], seriesLabels, data, isSmallTest)
 
-	outputCsv(numFiles, seriesLabels, titles[0], data, isSmallTest)
-
-	data = [[avg(y) for y in x] for x in data]
-	print avg(numpy.array(data[-1]) - numpy.array(data[0]))
+	# Save csv of data
+	outputCsv(numFiles, titles[0], seriesLabels, data, isSmallTest)
 
 if __name__ == '__main__':
     main()

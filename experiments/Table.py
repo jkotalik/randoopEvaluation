@@ -1,10 +1,18 @@
+# This script reads in the data from various csv files, specified as command
+# line arguments listing the prefix of the filename, up to and including the
+# experiment type {Complete or Individual}. Then the data is averaged across
+# the trials and then aggregated into one csv comparing all experiment
+# conditions {Randoop, Orienteering, ConstantMining, DigDog}.
 import sys, numpy, os
 
 header1 = ''
 header2 = ''
 tables = []
 
-def readCsv(filePrefix, numFiles):
+# string		fileName 		Name of file from which to read data
+# Reads the coverage percentage data stored in the csv files specified by filePrefix
+# Returns 3-tuple storing (first header for output, second header for output, data)
+def readCsv(filePrefix):
 	lineFile = open('%s Line Coverage Percentage.csv' % filePrefix, 'r')
 	branchFile = open('%s Branch Coverage Percentage.csv' % filePrefix, 'r')
 
@@ -41,6 +49,11 @@ def readCsv(filePrefix, numFiles):
 
 	return (header1, header2, data)
 
+# string 		header1		First header for csv, containing Time, Line, and Branch Coverage labels
+# string 		header2 	Second header for csv, containing various experiment conditions
+# 							{Randoop, Orienteering, ConstantMining, DigDog}
+# lst[list]		table 		Table containing data aggregated data to be written to csv
+# Outputs the data to the file 'csv/Average.csv'
 def writeCsv(header1, header2, table):
 	try:
 		os.remove('csv/Average.csv')
@@ -57,18 +70,18 @@ def writeCsv(header1, header2, table):
 			if i == 0:
 				print >> f, '%d,' % int(row[i]),
 			else:
-				print >> f, '%f,' % (int(row[i] * 100) / 100.0),
+				print >> f, '%d,' % int(row[i]),
 		print >> f
 
 def main():
-	numFiles = len(sys.argv) - 1
-
+	# Read in data from files listed in sys.argv
 	for i in range(1, len(sys.argv)):
 		filePrefix = sys.argv[i]
 		
-		header1, header2, table = readCsv(filePrefix, numFiles)
+		header1, header2, table = readCsv(filePrefix)
 		tables.append(table)
 
+	
 	# Cut down all datasets to the size of the smallest dataset
 	minLength = len(tables[0])
 	for i in range(len(tables)):
@@ -76,6 +89,7 @@ def main():
 
 	for i in range(len(tables)):
 		tables[i] = tables[i][:minLength]
+
 
 	resultTable = tables[0]
 	for i in range(1, len(tables)):
