@@ -508,15 +508,15 @@ doCoverage() {
                         ;;
                     Orienteering)
                         log "Running digDog with orienteering, time limit=${time}, ${project} #${i}"
-                        $java_path -ea -classpath ${jars}${curr_dir}/${classes_dir}:$digdog_path randoop.main.Main gentests --classlist=${project}classlist.txt --literals-level=CLASS --literals-file=CLASSES --timelimit=${time} --junit-reflection-allowed=false --junit-package-name=${curr_dir}.gentests --randomseed=$RANDOM --orienteering=true --ignore-flaky-tests=true
+                        $java_path -ea -classpath ${jars}${curr_dir}/${classes_dir}:$digdog_path randoop.main.Main gentests --classlist=${project}classlist.txt --literals-level=CLASS --literals-file=CLASSES --timelimit=${time} --junit-reflection-allowed=false --junit-package-name=${curr_dir}.gentests --randomseed=$RANDOM --weighted-sequences=true --ignore-flaky-tests=true
                         ;;
                     ConstantMining)
                         log "Running digDog with constant mining, time limit=${time}, ${project} #${i}"
-                        $java_path -ea -classpath ${jars}${curr_dir}/${classes_dir}:$digdog_path randoop.main.Main gentests --classlist=${project}classlist.txt --literals-level=CLASS --literals-file=CLASSES --timelimit=${time} --junit-reflection-allowed=false --junit-package-name=${curr_dir}.gentests --randomseed=$RANDOM --constant_mining=true --ignore-flaky-tests=true
+                        $java_path -ea -classpath ${jars}${curr_dir}/${classes_dir}:$digdog_path randoop.main.Main gentests --classlist=${project}classlist.txt --literals-level=CLASS --literals-file=CLASSES --timelimit=${time} --junit-reflection-allowed=false --junit-package-name=${curr_dir}.gentests --randomseed=$RANDOM --weighted-constants=true --ignore-flaky-tests=true
                         ;;
                     DigDog)
                         log "Running digDog with both features, time limit=${time}, ${project} #${i}"
-                        $java_path -ea -classpath ${jars}${curr_dir}/${classes_dir}:$digdog_path randoop.main.Main gentests --classlist=${project}classlist.txt --literals-level=CLASS --literals-file=CLASSES --timelimit=${time} --junit-reflection-allowed=false --junit-package-name=${curr_dir}.gentests --randomseed=$RANDOM --orienteering=true --constant_mining=true --ignore-flaky-tests=true
+                        $java_path -ea -classpath ${jars}${curr_dir}/${classes_dir}:$digdog_path randoop.main.Main gentests --classlist=${project}classlist.txt --literals-level=CLASS --literals-file=CLASSES --timelimit=${time} --junit-reflection-allowed=false --junit-package-name=${curr_dir}.gentests --randomseed=$RANDOM --weighted-sequences=true --weighted-constants=true --ignore-flaky-tests=true
                         ;;
                     *)
                         log "Unkown experiment condition"
@@ -653,7 +653,7 @@ doFaultDetection() {
                             ;;
                         DigDog)
                             log "Running DigDog (faults) with time limit=${time}, ${project} #${i}"
-                            $java_path -ea -classpath ${jars}${curr_dir}/${classes_dir}:$digdog_path randoop.main.Main gentests --classlist=${classlist_path} --literals-level=CLASS --literals-file=CLASSES --timelimit=${time} --junit-reflection-allowed=false --junit-package-name=${curr_dir}.gentests --randomseed=$RANDOM --ignore-flaky-tests=true --orienteering=true --constant_mining=true
+                            $java_path -ea -classpath ${jars}${curr_dir}/${classes_dir}:$digdog_path randoop.main.Main gentests --classlist=${classlist_path} --literals-level=CLASS --literals-file=CLASSES --timelimit=${time} --junit-reflection-allowed=false --junit-package-name=${curr_dir}.gentests --randomseed=$RANDOM --ignore-flaky-tests=true --weighted-sequences=true --weighted-constants=true
                             ;;
                         *)
                             log "Unknown condition in fault detection experiment"
