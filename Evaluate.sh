@@ -129,7 +129,7 @@ cd randoop
 work_dir=proj
 
 # Location of the DigDog jar in the DigDog repository.
-digdog_path=`pwd`"/build/libs/randoop-all-3.0.8.jar"
+digdog_path=`pwd`"/build/libs/randoop-all-3.0.10.jar"
 
 # Ensure that we can execute the java executable in this repository.
 chmod u+x $java_path
