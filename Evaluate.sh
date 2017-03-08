@@ -13,7 +13,7 @@ usage() {
 
 # Initialize some default options before parsing the command line arguments
 specified_experiments=("Randoop" "DigDog")
-projects=("Chart" "Lang" "Math" "Time")
+projects=("Time" "Chart" "Math" "Lang")
 
 log "Running DigDog Evaluation Script"
 
@@ -670,8 +670,8 @@ doFaultDetection() {
                     fi
                     i=$((i+1))
                 done
+		version=$((version+1))
             done
-            version=$((version+1))
         done
     done
 }
