@@ -182,7 +182,7 @@ else
 fi
 
 # Ensures that we can run defects4j command line tasks.
-export PATH=$PATH:`pwd`/framework/bin
+defects4j_task=`pwd`/framework/bin/defects4j
 
 # Check out the defects4j project that is currently specified by the $project variable.
 # $1: "f" or "b", indicating whether to check out the buggy (b) or fixed (f) version
@@ -201,8 +201,8 @@ checkoutProject() {
 
     # Checkout and compile current project into the working directory
     # that was just created.
-    defects4j checkout -p $project -v ${version}${1} -w $curr_dir
-    defects4j compile -w $curr_dir
+    $defects4j_task checkout -p $project -v ${version}${1} -w $curr_dir
+    $defects4j_task compile -w $curr_dir
 }
 
 # Checkout and compile all 4 Defects4j projects, placing each into its own working directory.
@@ -362,7 +362,7 @@ recordCoverage() {
     # Run the defects4j coverage task over the newly generated test suite.
     # Results are stored into results.txt, and the specific lines used to
     # generate coverage are put into numbers.txt
-    defects4j coverage -i ${project}classlist.txt -w $curr_dir -s ${curr_dir}/randoop.tar.bz2 > ${curr_dir}/results.txt
+    $defects4j_task coverage -i ${project}classlist.txt -w $curr_dir -s ${curr_dir}/randoop.tar.bz2 > ${curr_dir}/results.txt
     grep 'Lines total' ${curr_dir}/results.txt > ${curr_dir}/numbers.txt
     grep 'Lines covered' ${curr_dir}/results.txt >> ${curr_dir}/numbers.txt
     grep 'Conditions total' ${curr_dir}/results.txt >> ${curr_dir}/numbers.txt
@@ -546,7 +546,7 @@ initFaultDetectionClasses() {
     # Create the classlist and jar list for this project.
     log "Setting up class list for project ${project}_${version}b"
     cd ${curr_dir}
-    defects4j export -p tests.trigger -o ${project}_${version}b_relevant_tests.txt
+    $defects4j_task export -p tests.trigger -o ${project}_${version}b_relevant_tests.txt
     log "exported tests"
     test_file=`cat ${project}_${version}b_relevant_tests.txt`
     class_list_file="${project}_${version}_classlist.txt"
@@ -554,7 +554,7 @@ initFaultDetectionClasses() {
         rm -f $class_list_file
     fi
     for line in $test_file; do
-        defects4j monitor.test -t $line
+        $defects4j_task monitor.test -t $line
         cat loaded_classes.src >> $class_list_file
     done
     cd ..
