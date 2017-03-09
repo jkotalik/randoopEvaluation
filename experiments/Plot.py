@@ -203,7 +203,7 @@ def plot(isLinePlot, title, seriesLabels, data, isSmallTest):
 	if isSmallTest:
 		plt.savefig('smalltestData/plots/%s' % title, format='png')
 	else:
-		plt.savefig('plots/%s' % title, format='png')
+		plt.savefig('plots/%s.pdf' % title, format='pdf')
 
 # int					numFiles		Number of files from which the data was read
 # string 				title 			Title of output file
